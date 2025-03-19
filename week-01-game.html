@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코딩삼촌 - 한복친구의 모험</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #CFD3D0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 450px;
+            border: 4px solid #f582ae;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(245, 130, 174, 0.5);
+        }
+
+        #game {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #CFD3D0;
+        }
+
+        #player {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            bottom: 50px;
+            left: 50px;
+            transition: transform 0.1s;
+            z-index: 10;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .obstacle {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            bottom: 50px;
+            background-color: #f582ae;
+            border-radius: 50%;
+        }
+
+        .platform {
+            position: absolute;
+            height: 20px;
+            background-color: #8bd3dd;
+            border-radius: 10px;
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50px;
+            background-color: #8bd3dd;
+        }
+
+        #score-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #001858;
+        }
+
+        #skill-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .skill-btn {
+            width: 50px;
+            height: 50px;
+            background-color: #f582ae;
+            border: 2px solid #001858;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .skill-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(245, 130, 174, 0.8);
+        }
+
+        .skill-btn:active {
+            transform: scale(0.9);
+        }
+
+        .cooldown {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .collectible {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #f9bc60;
+            border-radius: 50%;
+            animation: shine 1.5s infinite alternate;
+        }
+
+        @keyframes shine {
+            0% {
+                box-shadow: 0 0 5px #f9bc60;
+            }
+            100% {
+                box-shadow: 0 0 20px #f9bc60;
+            }
+        }
+
+        .effect {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #game-over h2 {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        #restart-btn {
+            padding: 10px 20px;
+            background-color: #f582ae;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game">
+            <div id="player">
+                <!-- 클라우드플레어 스트림 iframe -->
+                <iframe id="player-video" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true" frameborder="0" style="width: 120%; height: 120%; background: transparent; object-fit: cover; position: absolute; top: -10%; left: -10%;" src="" autoplay="true" muted="muted"></iframe>
+            </div>
+            <div class="ground"></div>
+            <div id="score-container">점수: <span id="score">0</span></div>
+            <div id="skill-container">
+                <div class="skill-btn" id="skill1">1</div>
+                <div class="skill-btn" id="skill2">2</div>
+            </div>
+        </div>
+        <div id="game-over">
+            <h2>게임 오버!</h2>
+            <div id="final-score">최종 점수: 0</div>
+            <button id="restart-btn">다시 시작</button>
+        </div>
+    </div>
+
+    <script>
+        // 게임 상태
+        const gameState = {
+            score: 0,
+            isJumping: false,
+            isGameOver: false,
+            gravity: 0.8,
+            // 플레이어 점프 높이 증가
+            jumpPower: 18,
+            playerVelocity: 0,
+            gameSpeed: 2,
+            obstacles: [],
+            platforms: [],
+            collectibles: [],
+            effects: [],
+            lastObstacleTime: 0,
+            lastPlatformTime: 0,
+            lastCollectibleTime: 0,
+            playerState: 'normal', // 'normal', 'skill1', 'skill2'
+            skill1Cooldown: 0,
+            skill2Cooldown: 0,
+            gameStarted: false
+        };
+
+        // DOM 요소
+        const game = document.getElementById('game');
+        const player = document.getElementById('player');
+        const playerVideo = document.getElementById('player-video');
+        const scoreElement = document.getElementById('score');
+        const skill1Btn = document.getElementById('skill1');
+        const skill2Btn = document.getElementById('skill2');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // 클라우드플레어 스트림 URL
+        const videoUrls = {
+            normal: "https://iframe.cloudflarestream.com/42704824d4888af696f009191e2ee9ea", // 기본 캐릭터
+            skill1: "https://iframe.cloudflarestream.com/9bbb01844db9edc1f598776e9124d692", // 첫번째 스킬 캐릭터
+            skill2: "https://iframe.cloudflarestream.com/99e60958d6c7d4f429cdeef7c2df0a06"  // 두번째 스킬 캐릭터
+        };
+
+        // 플레이어 상태 변경 함수
+        function changePlayerState(state) {
+            if (gameState.playerState !== state || playerVideo.src === "") {
+                gameState.playerState = state;
+                playerVideo.src = videoUrls[state] + "?autoplay=true&loop=true&muted=true";
+                
+                // iframe 로드 확인
+                setTimeout(() => {
+                    if (!playerVideo.src.includes(videoUrls[state])) {
+                        playerVideo.src = videoUrls[state] + "?autoplay=true&loop=true&muted=true";
+                    }
+                }, 500);
+            }
+        }
+
+        // 초기 플레이어 비디오 설정 및 강제 로드
+        changePlayerState('normal');
+        
+        // 초기 캐릭터 세팅을 위한 지연 함수
+        function initialSetup() {
+            // 처음 캐릭터 생성시 강제 스킬 사용 (영상 로드 확실히 하기 위함)
+            setTimeout(() => {
+                useSkill1();
+                setTimeout(() => {
+                    useSkill2();
+                    setTimeout(() => {
+                        changePlayerState('normal');
+                    }, 300);
+                }, 300);
+            }, 300);
+        }
+        
+        window.onload = function() {
+            // 모든 비디오 로드 확인 + 추가 강제 로드
+            const forceLoad = document.createElement('div');
+            forceLoad.style.position = 'fixed';
+            forceLoad.style.left = '-9999px';
+            forceLoad.style.top = '-9999px';
+            forceLoad.innerHTML = `
+                <iframe src="${videoUrls.normal}?autoplay=true&loop=true&muted=true" style="width:1px;height:1px;" frameborder="0"></iframe>
+                <iframe src="${videoUrls.skill1}?autoplay=true&loop=true&muted=true" style="width:1px;height:1px;" frameborder="0"></iframe>
+                <iframe src="${videoUrls.skill2}?autoplay=true&loop=true&muted=true" style="width:1px;height:1px;" frameborder="0"></iframe>
+            `;
+            document.body.appendChild(forceLoad);
+            
+            // 메인 플레이어에도 영상 강제 설정
+            playerVideo.src = videoUrls.normal + "?autoplay=true&loop=true&muted=true";
+            
+            // 초기 세팅 함수 호출
+            initialSetup();
+        };
+
+        // 장애물 생성 함수
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            obstacle.style.left = `${game.clientWidth}px`;
+            
+            // 다양한 장애물 타입
+            const obstacleType = Math.floor(Math.random() * 3);
+            if (obstacleType === 1) {
+                obstacle.style.height = '70px';
+                obstacle.style.width = '30px';
+                obstacle.style.backgroundColor = '#f582ae';
+            } else if (obstacleType === 2) {
+                obstacle.style.height = '40px';
+                obstacle.style.width = '80px';
+                obstacle.style.backgroundColor = '#8bd3dd';
+                obstacle.style.borderRadius = '10px';
+            }
+            
+            game.appendChild(obstacle);
+            gameState.obstacles.push({
+                element: obstacle,
+                x: game.clientWidth,
+                width: parseInt(obstacle.style.width || 50),
+                height: parseInt(obstacle.style.height || 50)
+            });
+        }
+
+        // 플랫폼 생성 함수
+        function createPlatform() {
+            const platform = document.createElement('div');
+            platform.className = 'platform';
+            
+            const width = Math.random() * 100 + 100;
+            platform.style.width = `${width}px`;
+            
+            const height = 20;
+            const randomHeight = Math.random() * 200 + 100;
+            platform.style.bottom = `${randomHeight}px`;
+            platform.style.left = `${game.clientWidth}px`;
+            
+            game.appendChild(platform);
+            gameState.platforms.push({
+                element: platform,
+                x: game.clientWidth,
+                y: randomHeight,
+                width: width,
+                height: height
+            });
+        }
+
+        // 수집 아이템 생성 함수
+        function createCollectible() {
+            const collectible = document.createElement('div');
+            collectible.className = 'collectible';
+            
+            const randomHeight = Math.random() * 200 + 100;
+            collectible.style.bottom = `${randomHeight}px`;
+            collectible.style.left = `${game.clientWidth}px`;
+            
+            game.appendChild(collectible);
+            gameState.collectibles.push({
+                element: collectible,
+                x: game.clientWidth,
+                y: randomHeight,
+                collected: false
+            });
+        }
+
+        // 효과 생성 함수
+        function createEffect(x, y, type) {
+            const effect = document.createElement('div');
+            effect.className = 'effect';
+            effect.style.left = `${x}px`;
+            effect.style.bottom = `${y}px`;
+            
+            if (type === 'skill1') {
+                effect.style.width = '100px';
+                effect.style.height = '100px';
+                effect.style.backgroundColor = 'rgba(245, 130, 174, 0.7)';
+                effect.style.borderRadius = '50%';
+                effect.style.animation = 'skill1Effect 0.5s forwards';
+            } else if (type === 'skill2') {
+                effect.style.width = '200px';
+                effect.style.height = '200px';
+                effect.style.backgroundImage = 'radial-gradient(circle, #f9bc60, transparent)';
+                effect.style.animation = 'skill2Effect 1s forwards';
+            }
+            
+            game.appendChild(effect);
+            
+            // 일정 시간 후 효과 제거
+            setTimeout(() => {
+                game.removeChild(effect);
+            }, 1000);
+        }
+
+        // 스타일에 애니메이션 추가
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+            @keyframes skill1Effect {
+                0% { transform: scale(0); opacity: 0.7; }
+                100% { transform: scale(2); opacity: 0; }
+            }
+            
+            @keyframes skill2Effect {
+                0% { transform: scale(0); opacity: 0.7; }
+                50% { transform: scale(1.5); opacity: 0.5; }
+                100% { transform: scale(3); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
+        // 점프 함수
+        function jump() {
+            if (!gameState.isJumping && !gameState.isGameOver) {
+                gameState.isJumping = true;
+                gameState.playerVelocity = -gameState.jumpPower;
+            }
+        }
+
+        // 스킬 1 사용 함수
+        function useSkill1() {
+            if (!gameState.isGameOver) {
+                // 스킬 1 효과: 장애물 제거
+                changePlayerState('skill1');
+                
+                // 효과 생성
+                const playerRect = player.getBoundingClientRect();
+                const gameRect = game.getBoundingClientRect();
+                const x = playerRect.left - gameRect.left + playerRect.width / 2;
+                const y = playerRect.bottom - gameRect.bottom + gameRect.height;
+                
+                createEffect(x, y, 'skill1');
+                
+                // 가까운 장애물 제거
+                gameState.obstacles.forEach(obstacle => {
+                    if (obstacle.x < game.clientWidth / 2) {
+                        obstacle.element.remove();
+                        obstacle.removed = true;
+                    }
+                });
+                
+                gameState.obstacles = gameState.obstacles.filter(o => !o.removed);
+                
+                // 일정 시간 후 원래 상태로 돌아오기
+                setTimeout(() => {
+                    changePlayerState('normal');
+                }, 2000);
+            }
+        }
+
+        // 스킬 2 사용 함수
+        function useSkill2() {
+            if (!gameState.isGameOver) {
+                // 스킬 2 효과: 높이 점프
+                changePlayerState('skill2');
+                
+                // 효과 생성
+                const playerRect = player.getBoundingClientRect();
+                const gameRect = game.getBoundingClientRect();
+                const x = playerRect.left - gameRect.left + playerRect.width / 2;
+                const y = playerRect.bottom - gameRect.bottom + gameRect.height;
+                
+                createEffect(x, y, 'skill2');
+                
+                // 높이 점프
+                gameState.isJumping = true;
+                gameState.playerVelocity = -gameState.jumpPower * 1.5;
+                
+                // 일정 시간 후 원래 상태로 돌아오기
+                setTimeout(() => {
+                    changePlayerState('normal');
+                }, 2000);
+            }
+        }
+
+        // 충돌 감지 함수
+        function checkCollision() {
+            if (gameState.isGameOver) return;
+            
+            const playerRect = player.getBoundingClientRect();
+            
+            // 장애물과의 충돌 체크
+            gameState.obstacles.forEach(obstacle => {
+                if (!obstacle.element) return;
+                
+                const obstacleRect = obstacle.element.getBoundingClientRect();
+                
+                if (
+                    playerRect.right > obstacleRect.left + 10 &&
+                    playerRect.left < obstacleRect.right - 10 &&
+                    playerRect.bottom > obstacleRect.top + 10 &&
+                    playerRect.top < obstacleRect.bottom - 10
+                ) {
+                    if (gameState.playerState === 'skill1' || gameState.playerState === 'skill2') {
+                        // 스킬 상태에서는 장애물 제거
+                        obstacle.element.remove();
+                        obstacle.removed = true;
+                        gameState.score += 5;
+                    } else {
+                        // 게임 오버
+                        gameOver();
+                    }
+                }
+            });
+            
+            gameState.obstacles = gameState.obstacles.filter(o => !o.removed);
+            
+            // 수집 아이템과의 충돌 체크
+            gameState.collectibles.forEach(collectible => {
+                if (!collectible.element || collectible.collected) return;
+                
+                const collectibleRect = collectible.element.getBoundingClientRect();
+                
+                if (
+                    playerRect.right > collectibleRect.left &&
+                    playerRect.left < collectibleRect.right &&
+                    playerRect.bottom > collectibleRect.top &&
+                    playerRect.top < collectibleRect.bottom
+                ) {
+                    collectible.collected = true;
+                    collectible.element.style.animation = 'collected 0.3s forwards';
+                    
+                    // 점수 증가
+                    gameState.score += 10;
+                    
+                    // 효과 표시
+                    const effect = document.createElement('div');
+                    effect.textContent = '+10';
+                    effect.style.position = 'absolute';
+                    effect.style.left = `${collectibleRect.left}px`;
+                    effect.style.top = `${collectibleRect.top}px`;
+                    effect.style.color = '#f9bc60';
+                    effect.style.fontSize = '24px';
+                    effect.style.fontWeight = 'bold';
+                    effect.style.zIndex = '100';
+                    effect.style.animation = 'scorePopup 1s forwards';
+                    
+                    game.appendChild(effect);
+                    
+                    setTimeout(() => {
+                        collectible.element.remove();
+                        effect.remove();
+                    }, 300);
+                }
+            });
+            
+            gameState.collectibles = gameState.collectibles.filter(c => !c.collected);
+            
+            // 플랫폼과의 충돌 체크
+            let onPlatform = false;
+            
+            gameState.platforms.forEach(platform => {
+                if (!platform.element) return;
+                
+                const platformRect = platform.element.getBoundingClientRect();
+                
+                // 플랫폼 위에 착지
+                if (
+                    playerRect.bottom <= platformRect.top + 10 &&
+                    playerRect.bottom >= platformRect.top - 10 &&
+                    playerRect.right > platformRect.left + 10 &&
+                    playerRect.left < platformRect.right - 10 &&
+                    gameState.playerVelocity >= 0
+                ) {
+                    player.style.bottom = `${platform.y + platform.height}px`;
+                    gameState.playerVelocity = 0;
+                    gameState.isJumping = false;
+                    onPlatform = true;
+                }
+            });
+            
+            return onPlatform;
+        }
+
+        // 게임 오버 함수
+        function gameOver() {
+            gameState.isGameOver = true;
+            finalScoreElement.textContent = `최종 점수: ${gameState.score}`;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        // 게임 재시작 함수
+        function restartGame() {
+            // 게임 상태 초기화
+            gameState.score = 0;
+            gameState.isJumping = false;
+            gameState.isGameOver = false;
+            gameState.playerVelocity = 0;
+            gameState.skill1Cooldown = 0;
+            gameState.skill2Cooldown = 0;
+            
+            // 플레이어 위치 초기화
+            player.style.bottom = '50px';
+            
+            // 기존 요소 제거
+            gameState.obstacles.forEach(obstacle => {
+                if (obstacle.element) obstacle.element.remove();
+            });
+            gameState.platforms.forEach(platform => {
+                if (platform.element) platform.element.remove();
+            });
+            gameState.collectibles.forEach(collectible => {
+                if (collectible.element) collectible.element.remove();
+            });
+            
+            gameState.obstacles = [];
+            gameState.platforms = [];
+            gameState.collectibles = [];
+            
+            // 점수 초기화
+            scoreElement.textContent = '0';
+            
+            // 플레이어 상태 초기화
+            changePlayerState('normal');
+            
+            // 스킬 버튼 초기화
+            skill1Btn.classList.remove('cooldown');
+            skill2Btn.classList.remove('cooldown');
+            
+            // 게임 오버 화면 숨기기
+            gameOverScreen.style.display = 'none';
+        }
+
+        // 게임 업데이트 함수
+        function update() {
+            if (gameState.isGameOver) return;
+            
+            // 점수 업데이트
+            gameState.score += 0.1;
+            scoreElement.textContent = Math.floor(gameState.score);
+            
+            // 장애물 생성 (더 긴 간격으로 변경)
+            if (Date.now() - gameState.lastObstacleTime > 4000) {
+                createObstacle();
+                gameState.lastObstacleTime = Date.now();
+            }
+            
+            // 플랫폼 생성
+            if (Date.now() - gameState.lastPlatformTime > 3000) {
+                createPlatform();
+                gameState.lastPlatformTime = Date.now();
+            }
+            
+            // 수집 아이템 생성
+            if (Date.now() - gameState.lastCollectibleTime > 5000) {
+                createCollectible();
+                gameState.lastCollectibleTime = Date.now();
+            }
+            
+            // 장애물 이동
+            gameState.obstacles.forEach(obstacle => {
+                obstacle.x -= gameState.gameSpeed;
+                if (obstacle.element) {
+                    obstacle.element.style.left = `${obstacle.x}px`;
+                }
+                
+                // 화면 밖으로 나간 장애물 제거
+                if (obstacle.x < -obstacle.width) {
+                    obstacle.element.remove();
+                    obstacle.removed = true;
+                }
+            });
+            
+            gameState.obstacles = gameState.obstacles.filter(o => !o.removed);
+            
+            // 플랫폼 이동
+            gameState.platforms.forEach(platform => {
+                platform.x -= gameState.gameSpeed;
+                if (platform.element) {
+                    platform.element.style.left = `${platform.x}px`;
+                }
+                
+                // 화면 밖으로 나간 플랫폼 제거
+                if (platform.x < -platform.width) {
+                    platform.element.remove();
+                    platform.removed = true;
+                }
+            });
+            
+            gameState.platforms = gameState.platforms.filter(p => !p.removed);
+            
+            // 수집 아이템 이동
+            gameState.collectibles.forEach(collectible => {
+                collectible.x -= gameState.gameSpeed;
+                if (collectible.element) {
+                    collectible.element.style.left = `${collectible.x}px`;
+                }
+                
+                // 화면 밖으로 나간 수집 아이템 제거
+                if (collectible.x < -30) {
+                    collectible.element.remove();
+                    collectible.removed = true;
+                }
+            });
+            
+            gameState.collectibles = gameState.collectibles.filter(c => !c.removed && !c.collected);
+            
+            // 플레이어 움직임 적용
+            const onPlatform = checkCollision();
+            
+            if (!onPlatform) {
+                gameState.playerVelocity += gameState.gravity;
+                
+                // 바닥에 닿았는지 확인
+                const currentBottom = parseFloat(player.style.bottom || 50);
+                if (currentBottom <= 50 && gameState.playerVelocity > 0) {
+                    player.style.bottom = '50px';
+                    gameState.playerVelocity = 0;
+                    gameState.isJumping = false;
+                } else {
+                    // 중력 적용
+                    player.style.bottom = `${currentBottom - gameState.playerVelocity}px`;
+                }
+            }
+            
+            // 게임 속도 증가
+            if (gameState.score > 100 && gameState.score % 100 < 1) {
+                gameState.gameSpeed += 0.1;
+            }
+            
+            // 스킬 쿨다운 업데이트 (쿨다운 제거)
+            skill1Btn.classList.remove('cooldown');
+            skill2Btn.classList.remove('cooldown');
+            
+            requestAnimationFrame(update);
+        }
+
+        // 키보드 이벤트
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                jump();
+            } else if (e.code === 'Digit1' || e.key === '1') {
+                useSkill1();
+            } else if (e.code === 'Digit2' || e.key === '2') {
+                useSkill2();
+            }
+        });
+
+        // 터치 이벤트 (모바일)
+        game.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+
+        // 스킬 버튼 클릭 이벤트
+        skill1Btn.addEventListener('click', useSkill1);
+        skill2Btn.addEventListener('click', useSkill2);
+
+        // 재시작 버튼 클릭 이벤트
+        restartBtn.addEventListener('click', restartGame);
+
+        // 시작 화면 추가
+        const startScreen = document.createElement('div');
+        startScreen.id = 'start-screen';
+        startScreen.style.position = 'absolute';
+        startScreen.style.top = '0';
+        startScreen.style.left = '0';
+        startScreen.style.width = '100%';
+        startScreen.style.height = '100%';
+        startScreen.style.backgroundColor = 'rgba(254, 246, 228, 0.9)';
+        startScreen.style.display = 'flex';
+        startScreen.style.flexDirection = 'column';
+        startScreen.style.justifyContent = 'center';
+        startScreen.style.alignItems = 'center';
+        startScreen.style.zIndex = '100';
+        
+        const startTitle = document.createElement('h1');
+        startTitle.textContent = '한복친구의 모험';
+        startTitle.style.color = '#001858';
+        startTitle.style.fontSize = '36px';
+        startTitle.style.marginBottom = '20px';
+        
+        const startInfo = document.createElement('p');
+        startInfo.textContent = '스페이스바: 점프 | 1번 키: 장애물 제거 | 2번 키: 높은 점프';
+        startInfo.style.color = '#001858';
+        startInfo.style.marginBottom = '30px';
+        
+        const startButton = document.createElement('button');
+        startButton.textContent = '게임 시작';
+        startButton.style.padding = '10px 20px';
+        startButton.style.backgroundColor = '#f582ae';
+        startButton.style.border = 'none';
+        startButton.style.borderRadius = '5px';
+        startButton.style.color = 'white';
+        startButton.style.fontSize = '20px';
+        startButton.style.cursor = 'pointer';
+        startButton.style.transition = 'all 0.3s';
+        
+        startButton.onmouseover = () => {
+            startButton.style.transform = 'scale(1.1)';
+        };
+        
+        startButton.onmouseout = () => {
+            startButton.style.transform = 'scale(1)';
+        };
+        
+        startScreen.appendChild(startTitle);
+        startScreen.appendChild(startInfo);
+        startScreen.appendChild(startButton);
+        
+        game.appendChild(startScreen);
+        
+        // 비디오 강제 로드
+        changePlayerState('normal');
+        
+        // 게임 시작 버튼 이벤트
+        startButton.addEventListener('click', () => {
+            // 캐릭터 강제 로드 (100% 확실하게)
+            playerVideo.src = videoUrls.normal + "?autoplay=true&loop=true&muted=true";
+            
+            // 모든 스킬 한번씩 강제 사용 (영상 로드 위해)
+            useSkill1();
+            setTimeout(() => {
+                useSkill2();
+                setTimeout(() => {
+                    changePlayerState('normal');
+                    
+                    // 화면 전환
+                    game.removeChild(startScreen);
+                    update();
+                }, 300);
+            }, 300);
+        });
+    </script>
+</body>
+</html>

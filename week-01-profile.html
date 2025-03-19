@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 친구의 캐릭터 프로필</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Sniglet&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #fef6e4;
+            color: #172c66;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 배경 효과 */
+        .background-effect {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-bubble {
+            position: absolute;
+            background-color: rgba(243, 210, 193, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float-bubble 15s infinite linear;
+        }
+
+        @keyframes float-bubble {
+            0% {
+                transform: translateY(100vh) translateX(0);
+            }
+            100% {
+                transform: translateY(-100px) translateX(30px);
+            }
+        }
+
+        .container {
+            max-width: 100%;
+            width: 100%;
+            padding: 20px;
+            z-index: 1;
+        }
+
+        .profile-card {
+            background-color: #fff1db;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 15px;
+            border: 5px solid #f3d2c1;
+            transition: all 0.3s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 2l2.582 6.953L22 9.257l-5.822 4.602L18.18 21 12 16.891 5.82 21l2.002-7.141L2 9.257l7.418-.304L12 2z' fill='rgba(255, 204, 0, 1)'/%3E%3C/svg%3E");
+            background-size: contain;
+            animation: float 4s infinite ease-in-out;
+            z-index: 0;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.5));
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg) scale(1);
+            }
+            50% {
+                transform: translateY(-15px) rotate(5deg) scale(1.1);
+            }
+        }
+
+        .character-frame {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+            margin: 0 auto 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .character-frame:hover {
+            transform: scale(1.05);
+        }
+
+        .character-container {
+            width: 90%;
+            height: 90%;
+            border-radius: 50%;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1), 
+                        0 0 20px rgba(245, 130, 174, 0.5),
+                        0 0 40px rgba(249, 188, 96, 0.2);
+            border: 5px solid rgba(255, 255, 255, 0.7);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .character-container:after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, 
+                rgba(245, 130, 174, 0) 0%,
+                rgba(245, 130, 174, 0.3) 50%, 
+                rgba(245, 130, 174, 0) 100%);
+            animation: rotate-gradient 6s infinite linear;
+            z-index: -1;
+        }
+
+        @keyframes rotate-gradient {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .character-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            overflow: hidden;
+        }
+
+        .character-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .character-info {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .name-tag {
+            background-color: white;
+            border-radius: 50px;
+            padding: 10px 25px;
+            display: inline-block;
+            margin-bottom: 5px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 2px solid #f3d2c1;
+            transform: translateY(-15px);
+        }
+
+        .character-name {
+            font-size: 2rem;
+            color: #001858;
+            margin: 0;
+            text-shadow: 1px 1px 0px #f3d2c1;
+            position: relative;
+            display: inline-block;
+        }
+
+        .character-level {
+            font-size: 1rem;
+            background-color: #f582ae;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-5px);
+            }
+            60% {
+                transform: translateY(-2px);
+            }
+        }
+
+        .edit-button {
+            background-color: #f3d2c1;
+            border: none;
+            color: #001858;
+            padding: 5px 10px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: 10px;
+            vertical-align: middle;
+            transition: all 0.3s;
+        }
+
+        .edit-button:hover {
+            background-color: #f582ae;
+            transform: scale(1.1);
+        }
+
+        .stats-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .stats-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-item {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .stat-name {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #f582ae;
+        }
+
+        .stat-bar {
+            height: 15px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 3px rgba(0,0,0,0.05);
+        }
+
+        .stat-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0.1) 0%, 
+                rgba(255,255,255,0.3) 50%, 
+                rgba(255,255,255,0.1) 100%);
+            animation: shine 2s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .magic-button {
+            background: linear-gradient(45deg, #f582ae, #8bd3dd, #f9bc60);
+            background-size: 200% 200%;
+            animation: gradient-shift 5s ease infinite;
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-family: 'Jua', sans-serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: block;
+            width: 80%;
+            margin: 20px auto 0;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        @keyframes gradient-shift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .magic-button:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .magic-button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .magic-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: skewX(-30deg) translateX(-150%);
+            transition: none;
+        }
+
+        .magic-button:hover::before {
+            animation: shine-effect 1s;
+        }
+
+        @keyframes shine-effect {
+            100% {
+                transform: skewX(-30deg) translateX(250%);
+            }
+        }
+
+        .edit-mode input, .edit-mode select {
+            font-family: 'Jua', sans-serif;
+            padding: 8px 12px;
+            border: 2px solid #f582ae;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .edit-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background-color: white;
+            padding: 25px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .overlay.show .modal {
+            transform: translateY(0);
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: #001858;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .modal h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #f582ae, #f9bc60);
+            border-radius: 3px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #001858;
+        }
+
+        .video-url-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #f3d2c1;
+            border-radius: 10px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .video-url-input:focus {
+            border-color: #f582ae;
+            outline: none;
+        }
+
+        /* 토스트 메시지 스타일 */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            z-index: 1000;
+            font-size: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            animation: toast-in-out 3s ease;
+        }
+
+        @keyframes toast-in-out {
+            0%, 100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            10%, 90% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* 반응형 스타일 */
+        @media (max-width: 768px) {
+            .character-frame {
+                max-width: 250px;
+                height: 250px;
+            }
+            
+            .character-name {
+                font-size: 1.8rem;
+            }
+            
+            .magic-button {
+                width: 100%;
+                font-size: 1rem;
+                padding: 10px 20px;
+            }
+            
+            .stats-container {
+                margin-top: 10px;
+            }
+            
+            .profile-card {
+                max-width: 450px;
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .character-frame {
+                max-width: 200px;
+                height: 200px;
+            }
+            
+            .character-name {
+                font-size: 1.5rem;
+            }
+            
+            .character-level {
+                font-size: 0.8rem;
+                padding: 2px 8px;
+            }
+            
+            .stat-item {
+                margin-bottom: 10px;
+            }
+            
+            .sparkle {
+                width: 20px;
+                height: 20px;
+            }
+            
+            .profile-card {
+                max-width: 320px;
+                padding: 10px;
+            }
+            
+            .name-tag {
+                padding: 8px 15px;
+            }
+        }
+
+        /* 레인보우 모드 */
+        .rainbow-mode {
+            animation: rainbow-bg 8s infinite;
+        }
+
+        @keyframes rainbow-bg {
+            0% { background-color: #ff9a9e; }
+            14% { background-color: #fad0c4; }
+            28% { background-color: #ffd1ff; }
+            42% { background-color: #c2e9fb; }
+            57% { background-color: #a1c4fd; }
+            71% { background-color: #d4fc79; }
+            85% { background-color: #ffecd2; }
+            100% { background-color: #ff9a9e; }
+        }
+
+        /* 추가 애니메이션 효과 */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f582ae;
+            opacity: 0;
+            animation: confetti-fall 4s ease-in-out;
+            z-index: 0;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(600px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 배경 효과 -->
+    <div class="background-effect" id="background"></div>
+
+    <div class="container">
+        <div class="profile-card" id="profileCard">
+            <!-- 떠다니는 장식 요소들 -->
+            <div class="sparkle" style="top: 10%; left: 5%;"></div>
+            <div class="sparkle" style="top: 15%; right: 10%;"></div>
+            <div class="sparkle" style="bottom: 20%; left: 8%;"></div>
+            <div class="sparkle" style="bottom: 10%; right: 15%;"></div>
+            <div class="sparkle" style="top: 40%; left: 85%;"></div>
+            <div class="sparkle" style="top: 60%; right: 85%;"></div>
+
+            <!-- 캐릭터 영역 -->
+            <div class="character-frame" id="characterFrame">
+                <div class="character-container" id="characterContainer">
+                    <!-- 기본 캐릭터 iframe -->
+                    <iframe id="characterVideo" 
+                            src="https://iframe.cloudflarestream.com/99e60958d6c7d4f429cdeef7c2df0a06?autoplay=true&loop=true&muted=true"
+                            allow="autoplay; encrypted-media; picture-in-picture" 
+                            allowfullscreen></iframe>
+                    <!-- 비디오가 로드되지 않을 경우를 위한 대체 이미지 -->
+                    <img src="/api/placeholder/300/300" alt="캐릭터" class="character-image" id="characterImage" style="display: none;">
+                </div>
+            </div>
+
+            <!-- 캐릭터 정보 -->
+            <div class="character-info">
+                <div class="name-tag">
+                    <h1 class="character-name">
+                        미니 친구
+                        <span class="character-level">Lv.7</span>
+                        <button class="edit-button" id="editProfileButton" onclick="openEditModal()">수정</button>
+                    </h1>
+                </div>
+
+                <!-- 스탯 영역 -->
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-label">
+                            <span class="stat-name">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M7.05 14.121L4.93 16.243l2.828 2.828L19.071 7.757 16.243 4.93 14.12 7.05l1.415 1.414L14.12 9.88l-1.414-1.415-1.414 1.415 1.414 1.414-1.414 1.414-1.414-1.414-1.415 1.414 1.415 1.414-1.415 1.415L7.05 14.12zm9.9-11.313l4.242 4.242a1 1 0 0 1 0 1.414L8.464 21.192a1 1 0 0 1-1.414 0L2.808 16.95a1 1 0 0 1 0-1.414L15.536 2.808a1 1 0 0 1 1.414 0zM14.12 18.363l1.415-1.414 2.242 2.243h1.414v-1.414l-2.242-2.243 1.414-1.414L21 16.757V21h-4.242l-2.637-2.637zM5.636 9.878L2.807 7.05a1 1 0 0 1 0-1.415l2.829-2.828a1 1 0 0 1 1.414 0L9.88 5.635 8.464 7.05 6.343 4.928 4.929 6.343l2.121 2.12-1.414 1.415z' fill='rgba(245, 130, 174, 1)'/%3E%3C/svg%3E" class="stat-icon">
+                                창의력
+                            </span>
+                            <span class="stat-value">95%</span>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 95%; background-color: #f582ae;"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">
+                            <span class="stat-name">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-5h2v2h-2v-2zm2-1.645V14h-2v-1.5a1 1 0 0 1 1-1 1.5 1.5 0 1 0-1.471-1.794l-1.962-.393A3.501 3.501 0 1 1 13 13.355z' fill='rgba(139, 211, 221, 1)'/%3E%3C/svg%3E" class="stat-icon">
+                                귀여움
+                            </span>
+                            <span class="stat-value">100%</span>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 100%; background-color: #8bd3dd;"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">
+                            <span class="stat-name">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M19.562 12.098l1.531 2.652a3.5 3.5 0 0 1-3.03 5.25H16v2l-5-3.5 5-3.5v2h2.062a1.5 1.5 0 0 0 1.3-2.25l-1.532-2.652 1.732-1zM7.304 4.5l5 3.5-5 3.5v-2H5.241a1.5 1.5 0 0 0-1.298 2.25l1.53 2.652-1.732 1-1.53-2.652a3.5 3.5 0 0 1 3.03-5.25H7.304v-2z' fill='rgba(249, 188, 96, 1)'/%3E%3C/svg%3E" class="stat-icon">
+                                활동성
+                            </span>
+                            <span class="stat-value">85%</span>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 85%; background-color: #f9bc60;"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">
+                            <span class="stat-name">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 7a1 1 0 0 1 1 1v4h-2v-4a1 1 0 0 1 1-1zm0-4a1 1 0 1 1 0 2 1 1 0 0 1 0-2z' fill='rgba(0, 24, 88, 1)'/%3E%3C/svg%3E" class="stat-icon">
+                                특별 능력
+                            </span>
+                            <span class="stat-value">50%</span>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 50%; background-color: #001858;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 마법 버튼 -->
+                <button class="magic-button" id="magicButton" onclick="useMagic()">마법 사용하기!</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 수정 모달 -->
+    <div class="overlay" id="editModal">
+        <div class="modal">
+            <h2>캐릭터 정보 수정</h2>
+            <div class="form-group">
+                <label for="characterNameInput">캐릭터 이름</label>
+                <input type="text" id="characterNameInput" placeholder="캐릭터 이름">
+            </div>
+            <div class="form-group">
+                <label for="characterLevelInput">레벨</label>
+                <input type="number" id="characterLevelInput" min="1" max="99" placeholder="레벨">
+            </div>
+            <div class="form-group">
+                <label for="videoUrlInput">영상 URL</label>
+                <input type="text" id="videoUrlInput" class="video-url-input" placeholder="영상 URL 입력 (예: https://iframe.cloudflarestream.com/...)">
+            </div>
+            <div class="form-group">
+                <div style="display: flex; margin-bottom: 5px;">
+                    <input type="text" id="creativityNameInput" placeholder="스탯 이름" value="창의력" style="flex: 1; margin-right: 10px;">
+                    <span>(%)</span>
+                </div>
+                <input type="range" id="creativityStat" min="0" max="100" value="95">
+                <span id="creativityValue">95%</span>
+            </div>
+            <div class="form-group">
+                <div style="display: flex; margin-bottom: 5px;">
+                    <input type="text" id="cuteNameInput" placeholder="스탯 이름" value="귀여움" style="flex: 1; margin-right: 10px;">
+                    <span>(%)</span>
+                </div>
+                <input type="range" id="cuteStat" min="0" max="100" value="100">
+                <span id="cuteValue">100%</span>
+            </div>
+            <div class="form-group">
+                <div style="display: flex; margin-bottom: 5px;">
+                    <input type="text" id="activityNameInput" placeholder="스탯 이름" value="활동성" style="flex: 1; margin-right: 10px;">
+                    <span>(%)</span>
+                </div>
+                <input type="range" id="activityStat" min="0" max="100" value="85">
+                <span id="activityValue">85%</span>
+            </div>
+            <div class="form-group">
+                <div style="display: flex; margin-bottom: 5px;">
+                    <input type="text" id="specialNameInput" placeholder="스탯 이름" value="특별 능력" style="flex: 1; margin-right: 10px;">
+                    <span>(%)</span>
+                </div>
+                <input type="range" id="specialStat" min="0" max="100" value="50">
+                <span id="specialValue">50%</span>
+            </div>
+            <div class="edit-controls">
+                <button class="magic-button" id="saveButton" onclick="saveCharacterData()" style="width: 45%; margin: 0;">저장</button>
+                <button class="magic-button" id="cancelButton" onclick="closeEditModal()" style="width: 45%; margin: 0; background: linear-gradient(45deg, #8bd3dd, #f3d2c1, #fef6e4);">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 메시지 -->
+    <div class="toast" id="toast">변경사항이 저장되었습니다!</div>
+
+    <script>
+        // DOM 요소 참조
+        const characterVideo = document.getElementById('characterVideo');
+        const characterImage = document.getElementById('characterImage');
+        const characterNameEl = document.querySelector('.character-name');
+        const characterLevelEl = document.querySelector('.character-level');
+        const profileCard = document.getElementById('profileCard');
+        const editModal = document.getElementById('editModal');
+        const editProfileButton = document.getElementById('editProfileButton');
+        const saveButton = document.getElementById('saveButton');
+        const cancelButton = document.getElementById('cancelButton');
+        const magicButton = document.getElementById('magicButton');
+        const toast = document.getElementById('toast');
+        const background = document.getElementById('background');
+
+        // 폼 요소 참조
+        const characterNameInput = document.getElementById('characterNameInput');
+        const characterLevelInput = document.getElementById('characterLevelInput');
+        const videoUrlInput = document.getElementById('videoUrlInput');
+        const creativityStat = document.getElementById('creativityStat');
+        const creativityValue = document.getElementById('creativityValue');
+        const cuteStat = document.getElementById('cuteStat');
+        const cuteValue = document.getElementById('cuteValue');
+        const activityStat = document.getElementById('activityStat');
+        const activityValue = document.getElementById('activityValue');
+        const specialStat = document.getElementById('specialStat');
+        const specialValue = document.getElementById('specialValue');
+
+        // 초기 캐릭터 데이터
+        let characterData = {
+            name: '미니 친구',
+            level: 7,
+            videoUrl: 'https://iframe.cloudflarestream.com/7d79c13c4af86093373a9963da1b5746?autoplay=true&loop=true&muted=true', // 기본 비디오 URL
+            statNames: {
+                creativity: '창의력',
+                cute: '귀여움',
+                activity: '활동성',
+                special: '특별 능력'
+            },
+            stats: {
+                creativity: 95,
+                cute: 100,
+                activity: 85,
+                special: 50
+            }
+        };
+
+        // 페이지 로드 시 초기화
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM 로드 완료');
+            
+            // 기본 캐릭터 데이터 구조 확인
+            if (!characterData.statNames) {
+                characterData.statNames = {
+                    creativity: '창의력',
+                    cute: '귀여움',
+                    activity: '활동성',
+                    special: '특별 능력'
+                };
+            }
+            
+            if (!characterData.stats) {
+                characterData.stats = {
+                    creativity: 95,
+                    cute: 100,
+                    activity: 85,
+                    special: 50
+                };
+            }
+            
+            try {
+                // 캐릭터 데이터 로드 (로컬 스토리지에서 가져오기)
+                const savedData = localStorage.getItem('characterData');
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    console.log('로컬 스토리지에서 데이터 로드 성공');
+                    
+                    // 데이터 구조 확인 및 병합
+                    characterData.name = parsedData.name || characterData.name;
+                    characterData.level = parsedData.level || characterData.level;
+                    characterData.videoUrl = parsedData.videoUrl || characterData.videoUrl;
+                    
+                    // stats와 statNames가 있는지 확인하고 병합
+                    if (parsedData.stats) {
+                        characterData.stats = {
+                            ...characterData.stats,
+                            ...parsedData.stats
+                        };
+                    }
+                    
+                    if (parsedData.statNames) {
+                        characterData.statNames = {
+                            ...characterData.statNames,
+                            ...parsedData.statNames
+                        };
+                    }
+                    
+                    console.log('데이터 구조 확인 완료:', characterData);
+                }
+            } catch (error) {
+                console.error('로컬 스토리지 데이터 로드 오류:', error);
+                // 오류 발생 시 기본 데이터 사용
+            }
+            
+            // 비디오 소스 직접 설정 (초기화)
+            if (characterData.videoUrl) {
+                characterVideo.src = characterData.videoUrl;
+                console.log('비디오 URL 설정:', characterData.videoUrl);
+            }
+            
+            // iframe 로드 이벤트 설정
+            characterVideo.onload = function() {
+                console.log('비디오 iframe 로드 성공');
+                characterVideo.style.display = 'block';
+                characterImage.style.display = 'none';
+            };
+            
+            characterVideo.onerror = function() {
+                console.error('비디오 iframe 로드 실패');
+                characterVideo.style.display = 'none';
+                characterImage.style.display = 'block';
+            };
+            
+            // UI 업데이트
+            updateCharacterUI();
+            
+            // 배경 효과 생성
+            createBackgroundBubbles();
+            
+            // 이벤트 리스너 설정 - 페이지 로드 후 직접 설정
+            console.log('이벤트 리스너 설정 시작');
+            
+            // 수정 버튼 이벤트 리스너
+            document.getElementById('editProfileButton').addEventListener('click', function() {
+                console.log('수정 버튼 클릭됨');
+                openEditModal();
+            });
+            
+            // 마법 버튼 이벤트 리스너
+            document.getElementById('magicButton').addEventListener('click', function() {
+                console.log('마법 버튼 클릭됨');
+                useMagic();
+            });
+            
+            // 저장 버튼 이벤트 리스너
+            document.getElementById('saveButton').addEventListener('click', function() {
+                console.log('저장 버튼 클릭됨');
+                saveCharacterData();
+            });
+            
+            // 취소 버튼 이벤트 리스너
+            document.getElementById('cancelButton').addEventListener('click', function() {
+                console.log('취소 버튼 클릭됨');
+                closeEditModal();
+            });
+            
+            // 슬라이더 이벤트 설정
+            setupSliderEvents();
+            
+            // 콘솔에 디버그 메시지 출력
+            console.log('페이지 초기화 완료');
+        });
+        
+        // 이벤트 리스너 설정
+        function setupEventDelegation() {
+            // 직접 버튼에 이벤트 리스너 연결
+            editProfileButton.addEventListener('click', openEditModal);
+            magicButton.addEventListener('click', useMagic);
+            saveButton.addEventListener('click', saveCharacterData);
+            cancelButton.addEventListener('click', closeEditModal);
+            
+            console.log('이벤트 리스너 설정 완료');
+        }
+        
+        // 슬라이더 이벤트 설정
+        function setupSliderEvents() {
+            // 슬라이더 값 변경 시 표시 업데이트
+            creativityStat.addEventListener('input', () => {
+                creativityValue.textContent = `${creativityStat.value}%`;
+            });
+            
+            cuteStat.addEventListener('input', () => {
+                cuteValue.textContent = `${cuteStat.value}%`;
+            });
+            
+            activityStat.addEventListener('input', () => {
+                activityValue.textContent = `${activityStat.value}%`;
+            });
+            
+            specialStat.addEventListener('input', () => {
+                specialValue.textContent = `${specialStat.value}%`;
+            });
+        }
+
+        // 캐릭터 UI 업데이트
+        function updateCharacterUI() {
+            console.log('UI 업데이트 시작');
+            
+            // characterData가 유효한지 확인
+            if (!characterData) {
+                console.error('characterData가 정의되지 않았습니다.');
+                return;
+            }
+            
+            // 캐릭터 이름 업데이트 (버튼은 유지)
+            // 기존 내용 저장
+            const editButton = characterNameEl.querySelector('.edit-button');
+            const levelSpan = characterNameEl.querySelector('.character-level');
+            
+            // 이름 부분만 업데이트
+            characterNameEl.textContent = characterData.name || '미니 친구';
+            
+            // 레벨 업데이트
+            if (levelSpan) {
+                levelSpan.textContent = `Lv.${characterData.level || 1}`;
+                characterNameEl.appendChild(levelSpan);
+            } else {
+                const newLevelSpan = document.createElement('span');
+                newLevelSpan.className = 'character-level';
+                newLevelSpan.textContent = `Lv.${characterData.level || 1}`;
+                characterNameEl.appendChild(newLevelSpan);
+            }
+            
+            // 버튼 다시 추가
+            if (editButton) {
+                characterNameEl.appendChild(editButton);
+            } else {
+                const newEditButton = document.createElement('button');
+                newEditButton.className = 'edit-button';
+                newEditButton.id = 'editProfileButton';
+                newEditButton.textContent = '수정';
+                newEditButton.onclick = function() {
+                    console.log('수정 버튼 클릭됨 (인라인)');
+                    openEditModal();
+                };
+                characterNameEl.appendChild(newEditButton);
+            }
+            
+            // 비디오 소스 설정
+            if (characterData.videoUrl) {
+                characterVideo.src = characterData.videoUrl;
+                characterVideo.style.display = 'block';
+                characterImage.style.display = 'none';
+            } else {
+                characterVideo.style.display = 'none';
+                characterImage.style.display = 'block';
+            }
+            
+            // characterData.stats가 유효한지 확인
+            if (!characterData.stats || !characterData.statNames) {
+                console.error('characterData.stats 또는 characterData.statNames가 정의되지 않았습니다.');
+                return;
+            }
+            
+            // 스탯 바 업데이트
+            const statItems = document.querySelectorAll('.stat-item');
+            const statNames = Object.keys(characterData.stats);
+            
+            statItems.forEach((item, index) => {
+                if (index < statNames.length) {
+                    const statName = statNames[index];
+                    const statValue = characterData.stats[statName];
+                    const statValueEl = item.querySelector('.stat-value');
+                    const statFill = item.querySelector('.stat-fill');
+                    const statNameEl = item.querySelector('.stat-name');
+                    
+                    if (statValueEl && statFill && statNameEl) {
+                        // 스탯 이름 업데이트
+                        const statNameText = characterData.statNames[statName] || statName;
+                        const statIconImg = statNameEl.querySelector('img');
+                        
+                        if (statIconImg) {
+                            statNameEl.innerHTML = '';
+                            statNameEl.appendChild(statIconImg);
+                            statNameEl.appendChild(document.createTextNode(' ' + statNameText));
+                            
+                            // 모든 스탯 값을 실제 값으로 표시
+                            statValueEl.textContent = `${statValue}%`;
+                            
+                            statFill.style.width = `${statValue}%`;
+                        }
+                    }
+                }
+            });
+            
+            console.log('UI 업데이트 완료');
+        }
+
+        // 배경 효과 생성
+        function createBackgroundBubbles() {
+            for (let i = 0; i < 15; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('floating-bubble');
+                
+                // 랜덤 크기 및 위치
+                const size = Math.random() * 80 + 20;
+                const left = Math.random() * 100;
+                const delay = Math.random() * 5;
+                const duration = Math.random() * 10 + 10;
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${left}%`;
+                bubble.style.animationDelay = `${delay}s`;
+                bubble.style.animationDuration = `${duration}s`;
+                
+                background.appendChild(bubble);
+            }
+        }
+
+        // 이 함수는 더 이상 사용하지 않습니다 - 이벤트 위임 방식으로 대체되었습니다
+        // function setupEventListeners() { ... }
+
+        // 수정 모달 열기
+        function openEditModal() {
+            console.log('모달 열기 시작', characterData);
+            
+            // 데이터 구조 확인
+            if (!characterData.statNames) {
+                characterData.statNames = {
+                    creativity: '창의력',
+                    cute: '귀여움',
+                    activity: '활동성',
+                    special: '특별 능력'
+                };
+            }
+            
+            if (!characterData.stats) {
+                characterData.stats = {
+                    creativity: 95,
+                    cute: 100,
+                    activity: 85,
+                    special: 50
+                };
+            }
+            
+            // 폼에 현재 데이터 채우기
+            characterNameInput.value = characterData.name || '미니 친구';
+            characterLevelInput.value = characterData.level || 1;
+            videoUrlInput.value = characterData.videoUrl || '';
+            
+            // 스탯 이름 입력 필드 초기화 (안전하게 접근)
+            document.getElementById('creativityNameInput').value = 
+                (characterData.statNames && characterData.statNames.creativity) || '창의력';
+            document.getElementById('cuteNameInput').value = 
+                (characterData.statNames && characterData.statNames.cute) || '귀여움';
+            document.getElementById('activityNameInput').value = 
+                (characterData.statNames && characterData.statNames.activity) || '활동성';
+            document.getElementById('specialNameInput').value = 
+                (characterData.statNames && characterData.statNames.special) || '특별 능력';
+            
+            // 스탯 값 설정 (안전하게 접근)
+            creativityStat.value = (characterData.stats && characterData.stats.creativity) || 95;
+            creativityValue.textContent = `${creativityStat.value}%`;
+            
+            cuteStat.value = (characterData.stats && characterData.stats.cute) || 100;
+            cuteValue.textContent = `${cuteStat.value}%`;
+            
+            activityStat.value = (characterData.stats && characterData.stats.activity) || 85;
+            activityValue.textContent = `${activityStat.value}%`;
+            
+            specialStat.value = (characterData.stats && characterData.stats.special) || 50;
+            specialValue.textContent = `${specialStat.value}%`;
+            
+            // 모달 표시
+            editModal.classList.add('show');
+        }
+
+        // 수정 모달 닫기
+        function closeEditModal() {
+            editModal.classList.remove('show');
+        }
+
+        // 캐릭터 데이터 저장
+        function saveCharacterData() {
+            // 입력값 가져오기
+            characterData.name = characterNameInput.value || '미니 친구';
+            characterData.level = parseInt(characterLevelInput.value) || 1;
+            characterData.videoUrl = videoUrlInput.value;
+            
+            // 스탯 이름 저장
+            characterData.statNames.creativity = document.getElementById('creativityNameInput').value || '창의력';
+            characterData.statNames.cute = document.getElementById('cuteNameInput').value || '귀여움';
+            characterData.statNames.activity = document.getElementById('activityNameInput').value || '활동성';
+            characterData.statNames.special = document.getElementById('specialNameInput').value || '특별 능력';
+            
+            characterData.stats.creativity = parseInt(creativityStat.value);
+            characterData.stats.cute = parseInt(cuteStat.value);
+            characterData.stats.activity = parseInt(activityStat.value);
+            characterData.stats.special = parseInt(specialStat.value);
+            
+            // 로컬 스토리지에 저장
+            try {
+                localStorage.setItem('characterData', JSON.stringify(characterData));
+                console.log('캐릭터 데이터 저장 성공');
+            } catch (error) {
+                console.error('로컬 스토리지 저장 오류:', error);
+                // 오류 발생 시 사용자에게 알림
+                showToast('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+                return;
+            }
+            
+            // 비디오 URL이 변경된 경우 iframe 이벤트 다시 설정
+            if (characterData.videoUrl) {
+                characterVideo.onload = function() {
+                    console.log('비디오 iframe 로드 성공');
+                    characterVideo.style.display = 'block';
+                    characterImage.style.display = 'none';
+                };
+                
+                characterVideo.onerror = function() {
+                    console.error('비디오 iframe 로드 실패');
+                    characterVideo.style.display = 'none';
+                    characterImage.style.display = 'block';
+                };
+            }
+            
+            // UI 업데이트
+            updateCharacterUI();
+            
+            // 모달 닫기
+            closeEditModal();
+            
+            // 토스트 메시지 표시
+            showToast('캐릭터 정보가 저장되었습니다!');
+        }
+
+        // 토스트 메시지 표시
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 마법 사용하기
+        function useMagic() {
+            console.log('마법 사용 시작');
+            
+            // 데이터 구조 확인
+            if (!characterData.stats) {
+                characterData.stats = {
+                    creativity: 95,
+                    cute: 100,
+                    activity: 85,
+                    special: 50
+                };
+            }
+            
+            // 레인보우 모드 토글
+            profileCard.classList.toggle('rainbow-mode');
+            
+            // 폭죽 효과
+            createConfetti();
+            
+            // 특별 능력 증가
+            if (characterData.stats.special < 100) {
+                characterData.stats.special += 5;
+                if (characterData.stats.special > 100) characterData.stats.special = 100;
+                
+                // 로컬 스토리지에 저장
+                try {
+                    localStorage.setItem('characterData', JSON.stringify(characterData));
+                    console.log('마법 사용 후 데이터 저장 성공');
+                } catch (error) {
+                    console.error('마법 사용 후 데이터 저장 오류:', error);
+                }
+                
+                // UI 업데이트
+                updateCharacterUI();
+            }
+            
+            // 토스트 메시지 표시
+            showToast('✨ 마법이 발동되었습니다! ✨');
+        }
+
+        // 폭죽 효과 생성
+        function createConfetti() {
+            for (let i = 0; i < 30; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                
+                // 랜덤 색상
+                const colors = ['#f582ae', '#8bd3dd', '#f9bc60', '#fef6e4', '#001858'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 랜덤 크기 및 위치
+                const size = Math.random() * 15 + 5;
+                const left = Math.random() * 100;
+                const delay = Math.random() * 2;
+                
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.left = `${left}%`;
+                confetti.style.top = '0';
+                confetti.style.backgroundColor = color;
+                confetti.style.animationDelay = `${delay}s`;
+                
+                profileCard.appendChild(confetti);
+                
+                // 애니메이션 종료 후 제거
+                setTimeout(() => {
+                    confetti.remove();
+                }, 4000 + delay * 1000);
+            }
+        }
+    </script>
+</body>
+</html>
